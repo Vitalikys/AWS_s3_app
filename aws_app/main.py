@@ -76,6 +76,30 @@ class S3Service:
             logging.error(e)
             return False
 
+    def get_all_objects(self, bucket) -> list:
+        try:
+            objs = self.s3_client.list_objects(Bucket=bucket)
+        # objs.keys()  # dict_keys(['ResponseMetadata', 'IsTruncated', 'Marker', 'Contents', 'Name', 'Prefix', 'MaxKeys', 'EncodingType'])
+        # objs['Contents'][0].keys()  # dict_keys(['Key', 'LastModified', 'ETag', 'Size', 'StorageClass', 'Owner'])
+            list_keys_in_bucket = [obj['Key'] for obj in objs['Contents']]
+            print(list_keys_in_bucket)
+            return list_keys_in_bucket
+        except ClientError as e:
+            logging.error(e)
+            return str(e)
+
+    def check_exist(self, name_file, bucket):
+        try:
+            if name_file in bucket.objects.all():
+                return True
+            else:
+                return False
+        except ClientError as e:
+            logging.error(e)
+            return False
+
+
+
 
 
 
