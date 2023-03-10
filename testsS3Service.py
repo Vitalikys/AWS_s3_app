@@ -1,7 +1,6 @@
 import os
 import unittest
 from dotenv import load_dotenv
-# import aws_app
 from aws_app.main import S3Service
 
 load_dotenv()

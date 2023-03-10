@@ -5,10 +5,10 @@ import boto3
 from botocore.exceptions import ClientError, EndpointConnectionError
 
 logging.basicConfig(filename='app_s3.log',
-                    filemode='a+', # Open a file for both appending and reading.
+                    filemode='a+',  # Open a file for both appending and reading.
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.ERROR)
-
+                    level=logging.INFO)
+# FATAL-ERROR-WARN-INFO-DEBUG-TRACE
 logger = logging.getLogger(__name__)
 
 
@@ -34,11 +34,11 @@ class S3Service:
             location = {'LocationConstraint': region}
             self.s3_client.create_bucket(Bucket=bucket_name,
                                          CreateBucketConfiguration=location)
+            logging.info(f'Bucket `{bucket_name}` was created.')
             return True
         except ClientError as e:
             logging.error(e)
             return e
-
 
     def put_file(self, file_name: str, bucket: str, object_name=None) -> bool:
         """Upload a file to an S3 bucket
@@ -68,7 +68,6 @@ class S3Service:
         except ClientError as e:
             logging.error(f'Error uploading file to S3: {e}')
             return e
-
 
     def get_file(self, bucket_name: str, object_name: str) -> bool:
         """ Download file from S3 bucket to folder /media
