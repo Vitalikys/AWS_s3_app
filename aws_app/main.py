@@ -4,25 +4,20 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-import constant
-
-
-# from dotenv import load_dotenv
-# load_dotenv()
 
 class S3Service:
-    # ACCESS_KEY = os.environ.get("ACCESS_KEY")
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=constant.access_key,
-        aws_secret_access_key=constant.secret_access_key
-    )
+    def __init__(self, access_key: str, secret_access_key: str):
+        self.s3_client = boto3.client(
+            's3',
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_access_key
+        )
 
-    def create_bucket(self, bucket_name, region='eu-west-2'):
+    def create_new_bucket(self, bucket_name: str, region: str = 'eu-west-2') -> bool:
         """Create an S3 bucket in a specified region
 
         If a region is not specified, the bucket is created in the S3 default
-        region (us-east-1).
+        region (eu-west-2).
 
         :param bucket_name: Bucket to create
         :param region: String region to create bucket in, e.g., 'us-west-2'
@@ -32,20 +27,24 @@ class S3Service:
             location = {'LocationConstraint': region}
             self.s3_client.create_bucket(Bucket=bucket_name,
                                          CreateBucketConfiguration=location)
+            return True
         except ClientError as e:
-            print(str(e))
             logging.error(e)
-            return False
-        return True
+            return e
 
-    def upload_file(self, file_name, bucket, object_name=None):
+    def put_file(self, file_name: str, bucket: str, object_name=None) -> bool:
         """Upload a file to an S3 bucket
 
-        :param file_name: File to upload
+        :param file_name: File to upload.  Located in folder  /media
         :param bucket: Bucket to upload to
         :param object_name: S3 object name. If not specified then file_name is used
         :return: True if file was uploaded, else False
         """
+
+        # check if file exist
+        file_path = './media/' + file_name
+        if not os.path.exists(file_path):
+            raise FileNotFoundError
 
         # If S3 object_name was not specified, use file_name
         if object_name is None:
@@ -53,53 +52,44 @@ class S3Service:
 
         # Upload the file
         try:
-            response = self.s3_client.upload_file(file_name, bucket, object_name)
+            self.s3_client.upload_file(file_path, bucket, object_name)
+            return True
         except ClientError as e:
             logging.error(e)
-            return False
-        return True
+            return e
 
-    def download_file(self, bucket_name, object_name):
-        """ Upload file from S3 bucket
 
-        :param bucket_name:
+    def get_file(self, bucket_name: str, object_name: str) -> bool:
+        """ Download file from S3 bucket to folder /media
+
+        :param bucket_name: Name of Bucket
         :param object_name: File to download
         :return: True if file was Dowloaded, else False
         """
         try:
-            with open(object_name, 'wb') as f:
+            file_path = './media/' + object_name
+            with open(file_path, 'wb') as f:
                 self.s3_client.download_fileobj(bucket_name, object_name, f)
+
+            # check if file exist (if was saved to /media)
+            if not os.path.exists(file_path):
+                raise FileNotFoundError
+            return True
         except ClientError as e:
             logging.error(e)
-            return False
-        except Exception as e:
-            logging.error(e)
-            return False
+            return e
 
-    def get_all_objects(self, bucket) -> list:
+    def check_exist(self, file_name: str, bucket: str) -> bool:
         try:
+            # get list of all objects from bucket
             objs = self.s3_client.list_objects(Bucket=bucket)
-        # objs.keys()  # dict_keys(['ResponseMetadata', 'IsTruncated', 'Marker', 'Contents', 'Name', 'Prefix', 'MaxKeys', 'EncodingType'])
-        # objs['Contents'][0].keys()  # dict_keys(['Key', 'LastModified', 'ETag', 'Size', 'StorageClass', 'Owner'])
             list_keys_in_bucket = [obj['Key'] for obj in objs['Contents']]
-            print(list_keys_in_bucket)
-            return list_keys_in_bucket
-        except ClientError as e:
-            logging.error(e)
-            return str(e)
 
-    def check_exist(self, name_file, bucket):
-        try:
-            if name_file in bucket.objects.all():
+            # check if object exist
+            if file_name in list_keys_in_bucket:
                 return True
             else:
                 return False
         except ClientError as e:
             logging.error(e)
             return False
-
-
-
-
-
-
