@@ -2,8 +2,8 @@
 functionality: 
 
 * upload file on s3 
-* dowload file on s3
-* check if file eixsts on s3
+* download file from s3
+* check if file exists on s3
 
 ### How to run project
 ```shell
@@ -28,7 +28,7 @@ unittest
 
 
 ### run tests with Real  Credentials (connection to AWS):
-Only one file should exist in folder /media/file_3
+Only one file should exist in folder (before test) /media/file_3
 ```shell
 python3 testsS3Service.py
 ```

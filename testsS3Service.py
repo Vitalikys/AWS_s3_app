@@ -28,13 +28,11 @@ class S3serviceTest(unittest.TestCase):
     def test_put_file(self):
         file_name = 'file_3'
         bucket = self.BUCKET_NAME
-        print(bucket)
-        #  file_3  exist.  Located  in /media folder
+        #  file_3 should exist.  Located  in /media folder
         result = self.my_service.put_file(
             file_name=file_name,
             bucket=bucket
         )
-        print('TYPE', result, type(result))
         self.assertEqual(result, True)
         # get list of all objects from bucket
         objs = self.my_service.s3_client.list_objects(Bucket=bucket)
@@ -42,9 +40,7 @@ class S3serviceTest(unittest.TestCase):
 
         # checking if file was uploaded to service
         result_upload = file_name in list_keys_in_bucket
-        print('TYPE', type(result_upload))
         self.assertEqual(result_upload, True)
-
 
     def test_get_file(self):
         result_get = self.my_service.get_file(
