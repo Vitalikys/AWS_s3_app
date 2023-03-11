@@ -13,12 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class S3Service:
-    def __init__(self, access_key: str, secret_access_key: str):
-        self.s3_client = boto3.client(
-            's3',
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_access_key
-        )
+    def __init__(self):
+        self.s3_client = boto3.client('s3')
 
     def create_new_bucket(self, bucket_name: str, region: str = 'eu-west-2') -> bool:
         """Create an S3 bucket in a specified region

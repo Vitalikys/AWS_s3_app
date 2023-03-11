@@ -20,9 +20,9 @@ pip install -r requirements.txt
 
 ### How to Run Tests:  
 #### create .env file with your AWS Credentials:
-- BUCKET_NAME='vitalii-bucket-custom-2' # bucket would be created, don't use _
-- ACCESS_KEY='AKXXXXXXXXXXXXXXXXXXX'
-- SECRET_ACCESS_KEY='6xxxxxxxxxxxxxxxxxxxxxxx5WiNGo'
+- AWS_BUCKET_NAME='vitalii-bucket-custom-2' # bucket would be created, don't use _
+- AWS_ACCESS_KEY_ID='AKXXXXXXXXXXXXXXXXXXX'
+- AWS_SECRET_ACCESS_KEY='6xxxxxxxxxxxxxxxxxxxxxxx5WiNGo'
 
 Only one file should exist in folder (before test) /media/file_3
 
@@ -32,6 +32,9 @@ Only one file should exist in folder (before test) /media/file_3
 ```shell
 python -m unittest
 ```
-
+run only specific test file:
+```shell
+python -m unittest tests/tests_s3service_moto.py
+```
 
 

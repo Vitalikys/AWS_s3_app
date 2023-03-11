@@ -11,14 +11,8 @@ load_dotenv()
 class TestS3service(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.BUCKET_NAME = os.environ.get("BUCKET_NAME")
-        ACCESS_KEY = os.environ.get("ACCESS_KEY")
-        SECRET_ACCESS_KEY = os.environ.get("SECRET_ACCESS_KEY")
-        if SECRET_ACCESS_KEY and ACCESS_KEY:
-            self.my_service = S3Service(
-                access_key=ACCESS_KEY,
-                secret_access_key=SECRET_ACCESS_KEY
-            )
+        self.BUCKET_NAME = os.environ.get("AWS_BUCKET_NAME")
+        self.my_service = S3Service()
 
     @mock_s3
     def test_put_file(self):
