@@ -17,22 +17,21 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+### How to Run Tests:  
 #### create .env file with your AWS Credentials:
-- BUCKET_NAME='vitalii-bucket-custom-2'
+- BUCKET_NAME='vitalii-bucket-custom-2' # bucket would be created, don't use _
 - ACCESS_KEY='AKXXXXXXXXXXXXXXXXXXX'
 - SECRET_ACCESS_KEY='6xxxxxxxxxxxxxxxxxxxxxxx5WiNGo'
 
-
-
-#### run tests with Real  Credentials (connection to AWS):
 Only one file should exist in folder (before test) /media/file_3
+
+#### testsS3Service.py - test with Real Credentials (connection to AWS):
+#### tests_s3service_moto.py - test with Mock Moto (no connection to AWS):
+
 ```shell
-python3 testsS3Service.py
+python -m unittest
 ```
 
-#### run tests with Mock Moto (no connection to AWS):
-Only one file should exist in folder (before test) /media/file_3
-```shell
-python3 tests_moto.py
-```
+
 
