@@ -1,6 +1,6 @@
 # for AWS
 boto3
-moto[s3]  # Mock AWS Services
+moto[ec2,s3]  # Mock AWS Services
 coverage
 
 python-dotenv~=1.0.0
