@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from moto import mock_s3
-from aws_app.main import S3Service
+from aws_app.s3_service import S3Service
 
 load_dotenv()
 
