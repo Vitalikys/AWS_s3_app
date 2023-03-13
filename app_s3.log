@@ -1,5 +1,0 @@
-2023-03-10 13:00:48,523 - root - ERROR - File file_23 doesnt exist in ./media/file_23
-2023-03-10 13:01:32,133 - root - ERROR - File file_34 doesnt exist in ./media/file_34
-2023-03-13 15:30:23,015 - botocore.credentials - INFO - Found credentials in environment variables.
-2023-03-13 15:30:23,202 - root - INFO - Bucket `vitaliibucket` was created.
-2023-03-13 15:30:23,205 - root - ERROR - File file_4 doesnt exist in ./media/file_4
