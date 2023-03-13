@@ -61,6 +61,7 @@ class S3Service:
             return True
         except EndpointConnectionError as e:
             logging.error(f'Unable to connect to S3 endpoint: {e}')
+            return e
         except ClientError as e:
             logging.error(f'Error uploading file to S3: {e}')
             return e
@@ -73,7 +74,16 @@ class S3Service:
         :return: True if file was Dowloaded, else False
         """
         try:
-            file_path = './media/' + object_name
+            # create folder (bucket-name), for download files
+            if not os.path.exists(f'./media/{bucket_name}'):
+                os.mkdir(f'./media/{bucket_name}')
+
+            # check if file exists in bucket, before get(download) from s3
+            if not self.check_exist(object_name, bucket_name):
+                raise FileNotFoundError
+
+            # download file to folder /media/bucket_name/
+            file_path = os.path.join('./media/', bucket_name, object_name)
             with open(file_path, 'wb') as f:
                 self.s3_client.download_fileobj(bucket_name, object_name, f)
 

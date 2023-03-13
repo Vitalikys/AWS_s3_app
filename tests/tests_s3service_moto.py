@@ -15,7 +15,7 @@ class TestS3service(unittest.TestCase):
         self.my_service = S3Service()
 
     @mock_s3
-    def test_put_file(self):
+    def test_s3_service(self):
         # create bucket
         test_bucket_bool = self.my_service.create_new_bucket(
             bucket_name=self.BUCKET_NAME,
@@ -34,7 +34,7 @@ class TestS3service(unittest.TestCase):
                 bucket=self.BUCKET_NAME
             )
 
-        # try to upload  file EXIST
+        # try to upload to S3.  file EXIST
         result_bool = self.my_service.put_file(
             file_name='file_3',
             bucket=self.BUCKET_NAME
@@ -47,6 +47,16 @@ class TestS3service(unittest.TestCase):
             Key='file_3'
         )
         self.assertTrue(result_exist, msg='Check if file exist on S3 server')
+
+        result = self.my_service.get_file(
+            bucket_name=self.BUCKET_NAME,
+            object_name='file_3')
+        self.assertTrue(result)
+
+        result = self.my_service.check_exist(
+            bucket=self.BUCKET_NAME,
+            file_name='file_3_not_exist')
+        self.assertFalse(result)
 
 
 if __name__ == '__main__':

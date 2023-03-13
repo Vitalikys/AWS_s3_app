@@ -37,4 +37,8 @@ run only specific test file:
 python -m unittest tests/tests_s3service_moto.py
 ```
 
-
+```shell
+coverage run -m unittest tests/tests_s3service_moto.py
+coverage report
+coverage html
+```
