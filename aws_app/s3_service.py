@@ -1,15 +1,20 @@
 import logging
 import os
+from logging.config import fileConfig
 
 import boto3
 from botocore.exceptions import ClientError, EndpointConnectionError
 
-logging.basicConfig(filename='app_s3.log',
-                    filemode='a+',  # Open a file for both appending and reading.
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+# logging.basicConfig(filename='s3_service.log',
+#                     filemode='a+',  # Open a file for both appending and reading.
+#                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#                     level=logging.INFO)
 # FATAL-ERROR-WARN-INFO-DEBUG-TRACE
-logger = logging.getLogger(__name__)
+
+logging.config.fileConfig(fname='logs/log.config')
+# create logger
+logger = logging.getLogger('vitalik01')
+
 
 
 class S3Service:
@@ -30,10 +35,10 @@ class S3Service:
             location = {'LocationConstraint': region}
             self.s3_client.create_bucket(Bucket=bucket_name,
                                          CreateBucketConfiguration=location)
-            logging.info(f'Bucket `{bucket_name}` was created.')
+            logger.info(f'Bucket `{bucket_name}` was created.')
             return True
         except ClientError as e:
-            logging.error(e)
+            logger.error(e)
             return e
 
     def put_file(self, file_name: str, bucket: str, object_name=None) -> bool:
@@ -48,7 +53,7 @@ class S3Service:
         # check if file exist
         file_path = os.path.join('./media/', file_name)
         if not os.path.exists(file_path):
-            logging.error(f'File {file_name} doesnt exist in {file_path}')
+            logger.error(f'File {file_name} doesnt exist in {file_path}')
             raise FileNotFoundError
 
         # If S3 object_name was not specified, use file_name
@@ -58,12 +63,13 @@ class S3Service:
         # Upload the file
         try:
             self.s3_client.upload_file(file_path, bucket, object_name)
+            logger.info(f'File {file_name} was successfully uploaded to bucket: {bucket}')
             return True
         except EndpointConnectionError as e:
-            logging.error(f'Unable to connect to S3 endpoint: {e}')
+            logger.error(f'Unable to connect to S3 endpoint: {e}')
             return e
         except ClientError as e:
-            logging.error(f'Error uploading file to S3: {e}')
+            logger.error(f'Error uploading file to S3: {e}')
             return e
 
     def get_file(self, bucket_name: str, object_name: str) -> bool:
@@ -80,6 +86,7 @@ class S3Service:
 
             # check if file exists in bucket, before get(download) from s3
             if not self.check_exist(object_name, bucket_name):
+                logger.error(f'File {object_name} doesnt exist in {bucket_name}')
                 raise FileNotFoundError
 
             # download file to folder /media/bucket_name/
@@ -92,7 +99,7 @@ class S3Service:
                 raise FileNotFoundError
             return True
         except ClientError as e:
-            logging.error(f'Error downloading file from S3: {e}')
+            logger.error(f'Error downloading file from S3: {e}')
             return e
 
     def check_exist(self, file_name: str, bucket: str) -> bool:
@@ -107,5 +114,5 @@ class S3Service:
             else:
                 return False
         except ClientError as e:
-            logging.error(e)
+            logger.error(e)
             return False
