@@ -11,10 +11,9 @@ from botocore.exceptions import ClientError, EndpointConnectionError
 #                     level=logging.INFO)
 # FATAL-ERROR-WARN-INFO-DEBUG-TRACE
 
-logging.config.fileConfig(fname='logs/log.config')
+logging.config.fileConfig(fname='conf/logging_s3.conf')
 # create logger
 logger = logging.getLogger('vitalik01')
-
 
 
 class S3Service:
@@ -35,7 +34,7 @@ class S3Service:
             location = {'LocationConstraint': region}
             self.s3_client.create_bucket(Bucket=bucket_name,
                                          CreateBucketConfiguration=location)
-            logger.info(f'Bucket `{bucket_name}` was created.')
+            logger.info(f'Bucket - `{bucket_name}` was created.')
             return True
         except ClientError as e:
             logger.error(e)

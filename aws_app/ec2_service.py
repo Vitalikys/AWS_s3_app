@@ -1,6 +1,9 @@
 import boto3
-
+import logging.config
 from botocore.exceptions import ClientError, EndpointConnectionError
+
+logging.config.fileConfig(fname='conf/logging_ec2.conf')
+logger = logging.getLogger('vitalik01')
 
 
 class Ec2Service:
@@ -17,20 +20,32 @@ class Ec2Service:
 
     @property
     def account_id(self) -> str:
+        """
+        Returns details about the IAM user or role whose credentials are used to call the operation.
+        $ aws sts get-caller-identity      # command in console to get
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sts/client/get_caller_identity.html
+        :return: ID of account (12-digits)
+        """
         if not self._account_id:
             self._account_id = boto3.client('sts').get_caller_identity().get('Account')
         return self._account_id
 
     def get_one_instance_status(self, instance_id: str) -> str:
         response = self.ec2.describe_instance_status(InstanceIds=[instance_id])
+        logger.info(f'Get one instance status. Instance_ID: {instance_id} ')
         return response['InstanceStatuses'][0]['InstanceState']['Name']
 
-    # def get_list_all_id_instances(self, ) -> list:
-    #     """ function need to fix """
-    #     responce = self.ec2.describe_images(
-    #         Owners=['self'])
-    #     return responce
-    #     # return [responce['Images'][i]['ImageId'] for i in range(len(responce['Images']))]
+    def describe_one_instance(self, instance_id: str):
+        """
+        Get info about instance
+        :return:
+        """
+        try:
+            return self.ec2.describe_instances(
+                InstanceIds=[instance_id, ]
+            )
+        except ClientError as e:
+            logger.error(e)
 
     def all_instances(self) -> list:
         """
@@ -42,7 +57,7 @@ class Ec2Service:
             DryRun=False,
             MaxResults=12
         )
-        return [response['Reservations'][0]['Instances'][i]['InstanceId'] for i in range(len(response['Reservations']))]
+        return [item['Instances'][0]['InstanceId'] for item in response['Reservations']]
 
     def start_instance(self, id_instance: str, dry_run: bool = False) -> str:
         """
@@ -56,6 +71,7 @@ class Ec2Service:
             # AdditionalInfo='string',
             DryRun=dry_run)
         status = response['StartingInstances'][0]['CurrentState']['Name']
+        logger.info(f'Start Instance {id_instance}')
         return status
 
     def stop_instance(self,
@@ -74,14 +90,19 @@ class Ec2Service:
         :param force:
         :return: status
         """
-        response = self.ec2.stop_instances(
+        try:
+            response = self.ec2.stop_instances(
             InstanceIds=[instance_id],
-            Hibernate=hibernates,
+            Hibernate=False,
             DryRun=dry_run,
             Force=force
         )
-        # status = response['StoppingInstances'][0]['Name']
-        return response
+            # status = response['StoppingInstances'][0]['Name']
+            logger.info(f'Stop Instance {instance_id}')
+            return response
+        except Exception as err:
+            logger.error(err)
+            logger.error(f'Unable to stop instance id={instance_id}')
 
     def reboot_instance(self, instance_id: str) -> bool:
         try:
@@ -89,17 +110,35 @@ class Ec2Service:
                 InstanceIds=[instance_id, ],
                 DryRun=False
             )
+            logger.info(f"Reboot instance. ID= {instance_id}")
             return True
         except ClientError as e:
+            logger.error(f"Got error when rebooting instance {instance_id}")
+            logger.error(e)
             return e
 
-    def create_instance(self, availib_zone: str = 'eu-west-1a') -> dict:
+    def create_my_instance(self,
+                           ami_id: str = 'ami-0c55b159cbfafe1f0',
+                           availib_zone: str = 'eu-west-1a',
+                           inst_type: str = 't2.micro') -> dict:
+        """
+        Function to create one Instance - boto3.client
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2/service-resource/create_instances.html
+
+        For using   boto3.resource:
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2/client/run_instances.html
+
+        :param ami_id:  ID of the AMI.
+        :param inst_type: type of hard drive, that we want to create
+        :param availib_zone: it's not REGION !
+        :return:
+        """
         try:
             responce = self.ec2.run_instances(
-                ImageId='string',
-                InstanceType='a1.medium',
+                ImageId=ami_id,  # ID of the AMI.
+                InstanceType=inst_type,
                 MaxCount=1,
-                ClientToken='string',
+                # ClientToken='string',
                 MinCount=1,
                 Placement={
                     'AvailabilityZone': availib_zone,
@@ -108,10 +147,13 @@ class Ec2Service:
                     'PartitionNumber': 123,
                     'HostId': 'string',
                     'Tenancy': 'default',
-                    'SpreadDomain': 'string',
+                    # 'SpreadDomain': 'string', # Reserved for future use
                     'HostResourceGroupArn': 'string',
                     'GroupId': 'string'
                 })
+            logger.info(f'instance was created Successfully ')
             return responce
         except Exception as e:
+            logger.error(f"Got error when creating instance")
+            logger.error(e)
             raise e

@@ -1,10 +1,15 @@
 from datetime import datetime, timedelta, timezone
-
+import logging.config
 import boto3
+import pytz
+from botocore.exceptions import ClientError, EndpointConnectionError
+
+logging.config.fileConfig(fname='conf/logging_cloud_watch.conf')
+logger = logging.getLogger('vitalik01')
 
 
 class CloudwatchService:
-    def __init__(self, region="eu-west-1"):
+    def __init__(self, region='us-east-1'):
         self.region = region
         self._cloud_watch_client = None
 
@@ -14,43 +19,96 @@ class CloudwatchService:
             self._cloud_watch_client = boto3.client("cloudwatch", region_name=self.region)
         return self._cloud_watch_client
 
-    def get_ram_usage(self, instance_id: str):
-        """ # https: // boto3.amazonaws.com / v1 / documentation / api / latest / reference / services / cloudwatch / client / get_metric_data.html
-            Function to get RAM usage
-        :param instance_id:
+    def get_cpu_usage(self, instance_id: str):
+        """  Function to get CPU usage of EC2 instance
+
+        This function is implemented by 'get_metric_data':
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudwatch/client/get_metric_data.html
+        :param instance_id: instance_id
         :return:
         """
-        response = self.cloud_watch_client.get_metric_data(
-            MetricDataQueries=[
-                {
-                    'Id': instance_id,
-                    'MetricStat': {
-                        'Metric': {
-                            'Namespace': 'AWS/EC2',
-                            'MetricName': 'MemoryUtilization',
-                            'Dimensions': [
-                                {
-                                    'Name': 'InstanceId',
-                                    'Value': instance_id
-                                },
-                            ]
+        try:
+            end_time = datetime.now(tz=pytz.UTC)
+            start_time = end_time - timedelta(minutes=10)
+
+            response = self.cloud_watch_client.get_metric_data(
+                MetricDataQueries=[
+                    {
+                        'Id': 'cpu_v1',
+                        'MetricStat': {
+                            'Metric': {
+                                'Namespace': 'AWS/EC2',
+                                'MetricName': 'CPUUtilization',
+                                'Dimensions': [
+                                    {
+                                        'Name': 'InstanceId',
+                                        'Value': instance_id
+                                    },
+                                ]
+                            },
+                            'Period': 60,
+                            'Stat': 'Average',
+                            'Unit': 'Percent'
                         },
-                        'Period': 60,
-                        'Stat': 'Average',
-                        'Unit': 'Percent'
+                        'ReturnData': True,
                     },
-                    'ReturnData': True,
-                    'Period': 60,
-                    'AccountId': 'string'
-                },
-            ],
-            StartTime=datetime.now() - timedelta(seconds=60),
-            EndTime=datetime.now(),
-            # NextToken='string',
-            ScanBy='TimestampDescending',
-            MaxDatapoints=13,
-            # LabelOptions={'Timezone': 'timezone'}
-        )
-        return response['MetricDataResults']['Values'][0]
+                ],
+                StartTime=start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                EndTime=end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                # NextToken='string',
+                ScanBy='TimestampDescending',
+                MaxDatapoints=13,
+                # LabelOptions={'Timezone': 'timezone'}
+            )
+            logger.info(f"Get CPU usage of EC2 instance {instance_id}")
+            cpu_load_average = response['MetricDataResults'][0]['Values'][0]
+            # return response['MetricDataResults']#[0]['Values']
+            return '{:.2f}'.format(cpu_load_average)
+        except (ClientError, EndpointConnectionError) as e:
+            logger.error(f'Error trying get RAM usage of instance {instance_id}')
+            logger.error(e)
+            return e
+
+    def get_cpu_usage_2(self,
+                        instance_id: str,
+                        minutes_timedelta: int = 10):
+        """
+        Function to get CPU usage
+        time stamp must be in ISO 8601 UTC format (for example, 2016-10-03T23:00:00Z).
+        This function is implemented by 'get_metric_statistics':
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudwatch/client/get_metric_statistics.html
+        :param minutes_timedelta: timedelta in minutes, define start time
+        :param instance_id: instance_id
+        :return: Percents of CPU usage /OR Results List of Timestamps
+         example: [{'Timestamp': datetime, 'Average': 0.16, 'Maximum': 0.166, 'Unit': 'Percent'}]
+        """
+        try:
+            end_time = datetime.now(tz=pytz.UTC)
+            start_time = end_time - timedelta(minutes=minutes_timedelta)
+
+            response = self.cloud_watch_client.get_metric_statistics(
+                Namespace='AWS/EC2',
+                MetricName='CPUUtilization',
+                Dimensions=[
+                    {
+                        'Name': 'InstanceId',
+                        'Value': instance_id
+                    },
+                ],
+                StartTime=start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                EndTime=end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                Period=60,
+                Statistics=['Maximum', 'Average'],
+                Unit='Percent'
+            )
+            cpu_load_average = response['Datapoints'][0]['Average']
+            logger.info(f"Get CPU usage of EC2 instance {instance_id}")
+            # return response['Datapoints'] # return all data from response
+            return '{:.2f}'.format(cpu_load_average)
+        except ClientError as e:
+            logger.error(f"Got Error, trying to get CPU usage of EC2 instance {instance_id}")
+            logger.error(e)
+            return e
+
 
 

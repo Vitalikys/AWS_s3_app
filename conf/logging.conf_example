@@ -1,0 +1,28 @@
+[loggers]
+keys=root,simpleExample
+
+[handlers]
+keys=my_Handler
+
+[formatters]
+keys=simpleFormatter
+
+[logger_root]
+level=NOTSET
+handlers=
+
+[logger_simpleExample]
+level=INFO
+handlers=my_Handler
+qualname=simpleExample
+propagate=0
+
+[handler_my_Handler]
+class=handlers.RotatingFileHandler
+level=INFO
+formatter=simpleFormatter
+args=('logs/my_app_name.log', 'a+', 3255780, 15)
+
+[formatter_simpleFormatter]
+format=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+style=%
