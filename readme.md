@@ -9,6 +9,7 @@ Functionality:
 * download file from s3
 * check if file exists on s3
 
+How it works: [AWS software development kits - SDKs](https://aws.amazon.com/sdk-for-python/)
 ### How to run project
 ```shell
 git clone https://github.com/Vitalikys/AWS_s3_app.git
